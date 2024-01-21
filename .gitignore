@@ -1,0 +1,45 @@
+# Archivos temporales o de respaldo
+*~
+*.swp
+
+# Archivos de compilación
+*.class
+*.jar
+*.war
+*.ear
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Directorios de salida o generados
+/target/
+/bin/
+/dist/
+/out/
+
+# Archivos y directorios específicos
+node_modules/
+.DS_Store
+.idea/
+.vscode/
+
+# Archivos de configuración
+*.log
+*.conf
+
+# Archivos de credenciales
+*.env
+*.pem
+
+# Dependiendo del lenguaje de programación
+# Java
+*.class
+*.jar
+
+# Python
+__pycache__/
+*.pyc
+
+# Node.js
+npm-debug.log
