@@ -7,18 +7,23 @@ const Employee = conexion.define(
     id_employee: {
       type: Sequelize.UUID,
       primaryKey: true,
-      defaultValue: Sequelize.UUIDV4
+      defaultValue: Sequelize.UUIDV4,
     },
-    nombres: {
+    names: {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    apellidos: {
+    last_names: {
       type: Sequelize.STRING,
       allowNull: false,
     },
     ci: {
       type: Sequelize.STRING,
+      allowNull: false,
+    },
+    state: {
+      type: Sequelize.STRING,
+      defaultValue: "A",
       allowNull: false,
     },
   },
