@@ -7,6 +7,7 @@ import employeeRoutes from "./routes/employee.routes.js";
 import userRoutes from "./routes/user.routes.js";
 const app = express();
 
+app.disable('x-powered-by');
 app.use(cors());
 app.use(express.static("build"));
 app.use(express.json());

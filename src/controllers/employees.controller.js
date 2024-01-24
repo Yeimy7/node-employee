@@ -1,14 +1,18 @@
 import Employee from "../models/Employee.js";
-import { validationResult } from "express-validator";
+import {
+  validateEmployee,
+  validatePartialEmployee,
+} from "../schemas/employee.js";
 
 export const createEmployee = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    let err = errors.errors.map((err) => err.msg);
-    return res.status(400).json({ msg: err.join(), type: "error" });
-  }
   try {
-    const createdEmployee = await Employee.create(req.body);
+    const result = validateEmployee(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ msg: JSON.parse(result.error.message), type: "error" });
+    }
+    const createdEmployee = await Employee.create(result.data);
     res.status(201).json(createdEmployee);
   } catch (error) {
     res
@@ -42,21 +46,21 @@ export const getEmployeeById = async (req, res) => {
 };
 
 export const updateEmployeeById = async (req, res) => {
-  const { names, last_names, ci } = req.body;
   try {
+    const result = validatePartialEmployee(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ msg: JSON.parse(result.error.message), type: "error" });
+    }
     let employee = await Employee.findByPk(req.params.employeeId);
     if (!employee) {
       return res
         .status(404)
         .json({ msg: "Empleado no encontrado", type: "error" });
     }
-    const updates = {
-      names,
-      last_names,
-      ci,
-    };
 
-    const updatedEmployee = await employee.update(updates);
+    const updatedEmployee = await employee.update(result.data);
 
     res.status(200).json(updatedEmployee);
   } catch (error) {
@@ -75,8 +79,10 @@ export const deleteEmployeeById = async (req, res) => {
         .status(404)
         .json({ msg: "Empleado no encontrado", type: "error" });
     }
-    const deletedEmployee = await employee.update({ state: "I" });
-    res.status(200).json(deletedEmployee);
+    await employee.update({ state: "I" });
+    res
+      .status(200)
+      .json({ msg: "Empleado eliminado correctamente", type: "success" });
   } catch (error) {
     res
       .status(500)

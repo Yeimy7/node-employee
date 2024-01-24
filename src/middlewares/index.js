@@ -1,5 +1,5 @@
 import * as authJwt from './authJwt.js'
 import * as veryfySignup from './verifySignup.js'
-import * as veryfyAssetCode from './verifyAssetCode.js'
+import * as veryfyEmployeeCi from './verifyEmployeeCi.js'
 
-export { authJwt, veryfySignup, veryfyAssetCode }
+export { authJwt, veryfySignup, veryfyEmployeeCi }

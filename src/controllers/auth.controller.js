@@ -8,19 +8,35 @@ import { fileURLToPath } from "url";
 import { transporter } from "../config/mailer.js";
 import Role from "../models/Role.js";
 import User from "../models/User.js";
+import {
+  validateAuth,
+  validateNewPassAuth,
+  validatePartialAuth,
+} from "../schemas/auth.js";
 
 const { WORD_SECRET, WORD_SECRET_RESET, URL_FRONT } = config;
 
 export const signin = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    let user = await User.findOne({ where: { email }, include: Role });
+    const result = validateAuth(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ msg: JSON.parse(result.error.message), type: "error" });
+    }
+    let user = await User.findOne({
+      where: { email: result.data.email },
+      include: Role,
+    });
     if (!user) {
       return res
         .status(400)
         .json({ msg: "El usuario no existe", type: "error" });
     }
-    const correctPass = await bcryptjs.compare(password, user.password);
+    const correctPass = await bcryptjs.compare(
+      result.data.password,
+      user.password
+    );
     if (!correctPass) {
       return res
         .status(400)
@@ -40,18 +56,21 @@ export const signin = async (req, res) => {
       }
     );
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        msg: "Hubo un error durante el login, intentelo nuevamente",
-        type: "error",
-      });
+    res.status(400).json({
+      msg: "Hubo un error durante el login, intentelo nuevamente",
+      type: "error",
+    });
   }
 };
 
 export const updatePassword = async (req, res) => {
-  const { password, newPassword } = req.body;
   try {
+    const result = validateNewPassAuth(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ msg: JSON.parse(result.error.message), type: "error" });
+    }
     let user = await User.findOne({ where: { id_user: req.userId } });
     if (!user) {
       return res
@@ -59,7 +78,10 @@ export const updatePassword = async (req, res) => {
         .json({ msg: "El usuario no existe", type: "error" });
     }
 
-    const correctPass = await bcryptjs.compare(password, user.password);
+    const correctPass = await bcryptjs.compare(
+      result.data.password,
+      user.password
+    );
     if (!correctPass) {
       return res
         .status(500)
@@ -67,13 +89,14 @@ export const updatePassword = async (req, res) => {
     }
 
     const salt = await bcryptjs.genSalt(10);
-    const newPass = await bcryptjs.hash(newPassword, salt);
+    const newPass = await bcryptjs.hash(result.data.newPassword, salt);
     user.password = newPass;
     await user.save();
     res
       .status(200)
       .json({ msg: "Contraseña actualizada exitosamente", type: "success" });
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevamente", type: "error" });
@@ -81,89 +104,96 @@ export const updatePassword = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
+  const result = validatePartialAuth(req.body);
+  if (!result.success) {
     return res
       .status(400)
-      .json({ msg: "El email es requerido", type: "error" });
+      .json({ msg: JSON.parse(result.error.message), type: "error" });
   }
   const message =
     "Recibirás un email con instrucciones para reiniciar tu contraseña en unos minutos. <p><b>Por favor, revise su email</b></p>";
-  let linkVerificacion;
-  let emailStatus = "OK";
-  let user;
+  const emailFrom = '"Olvide la contraseña" <yeimylimachi@gmail.com>';
+  const emailSubject = "Olvide la contraseña";
+
   try {
-    user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email: result.data.email } });
     const token = jwt.sign({ id: user.id_user }, WORD_SECRET_RESET, {
       expiresIn: 600,
     });
-    linkVerificacion = `${URL_FRONT}/auth/new-password/${token}`;
+    const linkVerificacion = `${URL_FRONT}/auth/new-password/${token}`;
     user.reset_token = token;
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const filePath = path.join(__dirname, "../templates/email.hbs");
+    const source = fs.readFileSync(filePath, "utf-8");
+    const template = handlebars.compile(source)({ link: linkVerificacion });
+
+    await Promise.all([
+      transporter.sendMail({
+        from: emailFrom,
+        to: user.email,
+        subject: emailSubject,
+        html: template,
+      }),
+      user.save(),
+    ]);
+
+    res.json({ msg: message, info: "OK", type: "success" });
   } catch (error) {
-    return res.json({
-      msg: "No se encontró el email del usuario",
+    console.error("Error en forgotPassword:", error);
+
+    res.status(400).json({
+      msg: "Algo salió mal, inténtelo nuevamente",
+      info: error.toString(),
       type: "error",
     });
   }
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const filePath = path.join(__dirname, "../templates/email.hbs");
-  const source = fs.readFileSync(filePath, "utf-8");
-  const template = handlebars.compile(source)({ link: linkVerificacion });
-
-  try {
-    await transporter.sendMail({
-      from: '"Olvide la contraseña  👻" <yeimylimachi@gmail.com>', // sender address
-      to: user.email, // list of receivers
-      subject: "Olvide la contraseña", // Subject line
-      html: template,
-    });
-  } catch (error) {
-    emailStatus = error;
-    console.log(error);
-    return res
-      .status(400)
-      .json({ msg: "algo salio mal, intente nuevamente", type: "error" });
-  }
-  try {
-    await usuario.save();
-  } catch (error) {
-    emailStatus = error;
-    return res
-      .status(400)
-      .json({ msg: "Algo salio mal, intente nuevamente", type: "error" });
-  }
-  res.json({ msg: message, info: emailStatus, type: "success" });
 };
 
 export const createNewPassword = async (req, res) => {
-  const { newPassword } = req.body;
-  const resetToken = req.headers.reset;
-  if (!(resetToken && newPassword)) {
-    res
-      .status(400)
-      .json({ msg: "todos los campos son requeridos", type: "error" });
-  }
-  let jwtPayload;
-  let user;
   try {
-    jwtPayload = jwt.verify(resetToken, WORD_SECRET_RESET);
-    user = await User.findOne({ where: { reset_token: resetToken } });
-  } catch (error) {
-    return res
-      .status(401)
-      .json({ msg: "Algo salio mal, intente nuevamente", type: "error" });
-  }
-  try {
+    const { newPassword } = req.body;
+    const resetToken = req.headers.reset;
+    if (!newPassword) {
+      return res
+        .status(400)
+        .json({ msg: "El nuevo password es requerido", type: "error" });
+    }
+    if (!resetToken) {
+      return res
+        .status(400)
+        .json({ msg: "Reset Token no encontrado", type: "error" });
+    }
+
+    // Verificar el token y encontrar al usuario
+    const jwtPayload = jwt.verify(resetToken, WORD_SECRET_RESET);
+    const user = await User.findOne({ where: { reset_token: resetToken } });
+
+    // Cambiar la contraseña del usuario
     const salt = await bcryptjs.genSalt(10);
     const newPass = await bcryptjs.hash(newPassword, salt);
     user.password = newPass;
     await user.save();
-  } catch (error) {
-    return res
-      .status(401)
-      .json({ msg: "Algo salio mal, intente nuevamente", type: "error" });
-  }
 
-  res.json({ msg: "La contraseña fue cambiada.", type: "success" });
+    // Respuesta exitosa
+    res.json({ msg: "La contraseña fue cambiada.", type: "success" });
+  } catch (error) {
+    console.error("Error en createNewPassword:", error);
+
+    // Manejar errores específicos
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ msg: "El token ha expirado", type: "error" });
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ msg: "Token no válido", type: "error" });
+    }
+    // Si no es un error esperado, devolver un mensaje general
+    res
+      .status(401)
+      .json({ msg: "Algo salió mal, inténtelo nuevamente", type: "error" });
+  }
 };

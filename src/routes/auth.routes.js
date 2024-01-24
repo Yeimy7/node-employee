@@ -4,10 +4,10 @@ import * as authJwt from "../middlewares/authJwt.js";
 const router = Router();
 
 router.post("/signin", authController.signin);
-router.put("/forgot-password", authController.forgotPassword);
-router.put("/new-password", authController.createNewPassword);
-router.put(
-  "/profile/pwd",
+router.patch("/forgot-password", authController.forgotPassword);
+router.patch("/new-password", authController.createNewPassword);
+router.patch(
+  "/change-pwd",
   [authJwt.verifyToken],
   authController.updatePassword
 );

@@ -1,19 +1,19 @@
-import { validationResult } from "express-validator";
 import Role from "../models/Role.js";
 import User from "../models/User.js";
+import { validateUser } from "../schemas/user.js";
 
 export const createUser = async (req, res) => {
-  // Revisar si hay errores
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    let err = error.errors.map((message) => message.msg);
-    return res.status(400).json({ msg: err.join(), type: "error" });
-  }
-  const { username, email, password } = req.body;
   try {
-    //Guardar el usuario
+    const result = validateUser(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ msg: JSON.parse(result.error.message), type: "error" });
+    }
+
     const role = await Role.findOne({ where: { role: "supervisor" } });
-    const newUser = { username, email, password, id_role: role.id_role };
+    const newUser = { ...result.data, id_role: role.id_role };
+    console.log(newUser);
     const createdUser = await User.create(newUser);
     res.status(201).json(createdUser);
   } catch (error) {
@@ -26,23 +26,19 @@ export const getUsers = async (_req, res) => {
   try {
     const users = await User.findAll({
       raw: true,
-      attributes: { exclude: ["password", "id_rol"] },
+      attributes: { exclude: ["password", "id_role"] },
       include: Role,
-      where: { estado: "A" },
+      where: { state: "A" },
     });
     res.json(users);
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevemente", type: "error" });
   }
 };
 export const ascendUser = async (req, res) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array() });
-  }
-
   try {
     const user = await User.findOne({ where: { id_user: req.params.id } });
     if (!user)
@@ -64,11 +60,6 @@ export const ascendUser = async (req, res) => {
   }
 };
 export const descendUser = async (req, res) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array() });
-  }
-
   try {
     const user = await User.findOne({ where: { id_user: req.params.id } });
     if (!user)
@@ -78,7 +69,7 @@ export const descendUser = async (req, res) => {
 
     // Buscar el rol Administrador
     const role = await Role.findOne({ where: { role: "supervisor" } });
-    user.id_rol = role.id_rol;
+    user.id_role = role.id_role;
     await user.save();
     res
       .status(201)
@@ -98,9 +89,10 @@ export const deleteUserById = async (req, res) => {
         .status(404)
         .json({ msg: "Usuario no encontrado", type: "error" });
     }
-    user.state = "I";
-    await user.save();
-    res.json({ msg: "Usuario eliminado correctamente", type: "success" });
+    await user.update({ state: "I" });
+    res
+      .status(200)
+      .json({ msg: "Usuario eliminado correctamente", type: "success" });
   } catch (error) {
     res
       .status(500)
