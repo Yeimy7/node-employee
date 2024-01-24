@@ -23,6 +23,19 @@ const Employee = conexion.define(
       allowNull: false,
       unique: true,
     },
+    genre: {
+      type: Sequelize.ENUM,
+      values: ["masculino", "femenino"],
+      allowNull: false,
+    },
+    position: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    salary: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
     state: {
       type: Sequelize.STRING,
       defaultValue: "A",

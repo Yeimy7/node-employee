@@ -29,7 +29,6 @@ export const isAdmin = async (req, res, next) => {
     }
     return res.status(403).json({ msg: 'Requiere el rol de Administrador', type: 'error' })
   } catch (error) {
-    console.log(error)
     res.status(401).json({ msg: 'Error en el servidor, intente nuevamente', type: 'error' })
   }
 }

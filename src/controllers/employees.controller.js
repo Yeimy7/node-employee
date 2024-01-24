@@ -1,3 +1,4 @@
+import { Op, Sequelize } from "sequelize";
 import Employee from "../models/Employee.js";
 import {
   validateEmployee,
@@ -15,7 +16,6 @@ export const createEmployee = async (req, res) => {
     const createdEmployee = await Employee.create(result.data);
     res.status(201).json(createdEmployee);
   } catch (error) {
-    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevemente", type: "error" });
@@ -29,7 +29,11 @@ export const getEmployees = async (req, res) => {
     const where = {
       state: "A",
       ...(depto && { id_department: depto }),
-      ...(position && { position }),
+      ...(position && {
+        position:
+          Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('position')), 'LIKE', '%' + position.toLowerCase() + '%')
+      ,
+      }),
       ...(salary && { salary }),
       ...(genre && { genre }),
     };
@@ -38,7 +42,6 @@ export const getEmployees = async (req, res) => {
 
     return res.status(200).json(employees || []);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       msg: "Error en el servidor, intente nuevamente",
       type: "error",

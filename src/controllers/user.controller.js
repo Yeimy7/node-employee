@@ -13,7 +13,6 @@ export const createUser = async (req, res) => {
 
     const role = await Role.findOne({ where: { role: "supervisor" } });
     const newUser = { ...result.data, id_role: role.id_role };
-    console.log(newUser);
     const createdUser = await User.create(newUser);
     res.status(201).json(createdUser);
   } catch (error) {
@@ -32,7 +31,6 @@ export const getUsers = async (_req, res) => {
     });
     res.json(users);
   } catch (error) {
-    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevemente", type: "error" });

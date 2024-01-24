@@ -96,7 +96,6 @@ export const updatePassword = async (req, res) => {
       .status(200)
       .json({ msg: "Contraseña actualizada exitosamente", type: "success" });
   } catch (error) {
-    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevamente", type: "error" });
