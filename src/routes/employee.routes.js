@@ -6,7 +6,7 @@ const router = Router();
 
 router.post(
   "/",
-  [authJwt.verifyToken, authJwt.isAdmin, veryfyEmployeeCi.checkDuplicateCi],
+  [authJwt.verifyToken, veryfyEmployeeCi.checkDuplicateCi],
   employeeController.createEmployee
 );
 router.get("/", authJwt.verifyToken, employeeController.getEmployees);
@@ -17,7 +17,7 @@ router.get(
 );
 router.patch(
   "/:employeeId",
-  [authJwt.verifyToken, authJwt.isAdmin, veryfyEmployeeCi.checkDuplicateCi],
+  [authJwt.verifyToken, veryfyEmployeeCi.checkDuplicateCi],
   employeeController.updateEmployeeById
 );
 router.delete(

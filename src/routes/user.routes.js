@@ -15,7 +15,7 @@ router.post(
 );
 router.get(
   "/",
-  [authJwt.verifyToken, authJwt.isAdmin],
+  [authJwt.verifyToken],
   userController.getUsers
 );
 router.patch(
