@@ -15,6 +15,7 @@ export const createEmployee = async (req, res) => {
     const createdEmployee = await Employee.create(result.data);
     res.status(201).json(createdEmployee);
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .json({ msg: "Error en el servidor, intente nuevemente", type: "error" });
@@ -23,15 +24,27 @@ export const createEmployee = async (req, res) => {
 
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.findAll({ where: { state: "A" } });
-    res.status(200).json(employees);
+    const { depto, position, salary, genre } = req.query;
+
+    const where = {
+      state: "A",
+      ...(depto && { id_department: depto }),
+      ...(position && { position }),
+      ...(salary && { salary }),
+      ...(genre && { genre }),
+    };
+
+    const employees = await Employee.findAll({ where });
+
+    return res.status(200).json(employees || []);
   } catch (error) {
-    res
-      .status(500)
-      .json({ msg: "Error en el servidor, intente nuevemente", type: "error" });
+    console.log(error);
+    return res.status(500).json({
+      msg: "Error en el servidor, intente nuevamente",
+      type: "error",
+    });
   }
 };
-
 export const getEmployeeById = async (req, res) => {
   try {
     const employee = await Employee.findOne({

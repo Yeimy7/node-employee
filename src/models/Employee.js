@@ -1,5 +1,6 @@
 import * as Sequelize from "sequelize";
 import conexion from "../config/db.js";
+import Department from "./Department.js";
 
 const Employee = conexion.define(
   "employee",
@@ -27,6 +28,10 @@ const Employee = conexion.define(
       defaultValue: "A",
       allowNull: false,
     },
+    id_department: {
+      type: Sequelize.UUID,
+      allowNull: false,
+    },
   },
   {
     freezeTableName: true,
@@ -36,4 +41,5 @@ const Employee = conexion.define(
 
 Employee.sync();
 
+Employee.belongsTo(Department, { foreignKey: "id_department" });
 export default Employee;

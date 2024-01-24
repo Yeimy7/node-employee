@@ -9,7 +9,7 @@ export const checkDuplicateCi = async (req, res, next) => {
     });
     if (ciEmp)
       return res.status(400).json({
-        msg: `Ya existe un empleado con ci: ${req.body.ci} registrado`,
+        msg: `Ya existe un empleado con ci: ${ci} registrado`,
         type: "error",
       });
     next();
