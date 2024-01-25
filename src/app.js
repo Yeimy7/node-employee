@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import employeeRoutes from "./routes/employee.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import departmentRoutes from "./routes/department.routes.js";
+import { verifyTables } from "./utils/initialSetup.js";
 
 const app = express();
 
@@ -19,4 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/department", departmentRoutes);
+
+verifyTables();
+
 export default app;

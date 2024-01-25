@@ -43,7 +43,7 @@ const User = conexion.define(
   },
   {
     freezeTableName: true,
-    timestamps: true,
+    timestamps: false,
     hooks: {
       beforeCreate: (user) => {
         const salt = bcrypt.genSaltSync(10);

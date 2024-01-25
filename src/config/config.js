@@ -15,8 +15,8 @@ export const WORD_SECRET = process.env.WORD_SECRET || 'jupiter845'
 export const WORD_SECRET_RESET = process.env.WORD_SECRET_RESET || 'jupiter845123'
 
 //Email configuration
-export const EMAIL = process.env.EMAIL || 'yeimylimachi@gmail.com'
-export const PASSWORD = process.env.PASSWORD 
+export const EMAIL = process.env.EMAIL
+export const PASSWORD = process.env.PASSWORD
 
 //
-export const URL_FRONT = process.env.URL_FRONT || 'http://localhost:3000'
+export const URL_FRONT = process.env.URL_FRONT || 'http://localhost:5173'

@@ -48,7 +48,7 @@ const Employee = conexion.define(
   },
   {
     freezeTableName: true,
-    timestamps: true,
+    timestamps: false,
   }
 );
 
